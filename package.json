@@ -1,0 +1,11 @@
+{
+  "name": "bgg-telecom",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev:server": "cd apps/server && npm run dev",
+    "build:server": "cd apps/server && npm run build",
+    "start:server": "cd apps/server && npm run start",
+    "prisma": "cd apps/server && npx prisma"
+  }
+}

@@ -3,8 +3,8 @@
 Projeto fullstack para gerenciamento de chamados de suporte.
 
 ## Estrutura
-- `backend/` → API REST (Node.js, Express, Prisma, PostgreSQL)
-- `frontend/` → Interface Web (ReactJS, tailwind)
+- `server/` → API REST (Node.js, Express, Prisma, PostgreSQL)
+- `client/` → Interface Web (ReactJS, tailwind)
 
 ## Como rodar
 

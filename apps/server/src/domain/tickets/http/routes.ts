@@ -5,16 +5,23 @@ import { ensureRoles } from "../../../singletons/middleware/ensure-role";
 
 
 
-export const TicketRoute = Router();
+export const ticketRoute = Router();
 
 const ticketController = new TicketController();
 
-TicketRoute.post("/create-ticket", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.createTicket);
+ticketRoute.post("/create-ticket", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.createTicket);
 
-TicketRoute.put("/update-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.updateTicket);
+ticketRoute.put("/update-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.updateTicket);
 
-TicketRoute.get("/ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.getTicketById);
+ticketRoute.patch(
+  "/assign/:id",
+  ensureAuthenticated,
+  ensureRoles(["TECH"]),
+  ticketController.assignTicket
+);
 
-TicketRoute.get("/list", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.listTickets);
+ticketRoute.get("/ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.getTicketById);
 
-TicketRoute.delete("/delete-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.deleteTicket);
+ticketRoute.get("/list", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.listTickets);
+
+ticketRoute.delete("/delete-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.deleteTicket);

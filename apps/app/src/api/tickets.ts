@@ -21,6 +21,11 @@ export async function updateTicket(id: string, payload: UpdateTicketPayload) {
     return data;
 }
 
+export async function assignTicketToMe(id: string) {
+    const { data } = await api.patch(`/tickets/assign/${id}`);
+    return data;
+}
+
 export async function deleteTicket(id: string) {
     const { data } = await api.delete(`/tickets/delete-ticket/${id}`);
     return data;

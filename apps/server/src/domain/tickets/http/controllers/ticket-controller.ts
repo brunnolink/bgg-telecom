@@ -36,7 +36,23 @@ export class TicketController {
   };
 
   listTickets = async (req: Request, res: Response) => {
-    const tickets = await this.service.list(req.query);
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const page = Math.max(Number(req.query.page ?? 1), 1);
+    const limit = Math.min(Math.max(Number(req.query.limit ?? 10), 1), 100);
+
+    const tickets = await this.service.list({
+      page,
+      limit,
+      status: req.query.status as any,
+      priority: req.query.priority as any,
+      createdAt: req.query.createdAt as any,
+      userId: req.user.id,
+      role: req.user.role,       
+    });
+
     return res.json(tickets);
   };
 
@@ -62,7 +78,7 @@ export class TicketController {
     const ticketId = req.params.id as string;
 
     if (!req.user) return res.status(401).json({ message: "Not authenticated" });
-    
+
     if (req.user.role !== "TECH")
       return res.status(403).json({ message: "Only TECH can assign tickets" });
 

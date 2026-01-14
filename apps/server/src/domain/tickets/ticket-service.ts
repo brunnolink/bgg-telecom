@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
-import { TicketPriority, TicketStatus } from "@prisma/client";
+import { TicketStatus } from "@prisma/client";
 import { AppError } from "../../errors/AppError";
 import { TicketEntity } from "./ticket-entity";
 import { TicketRepository } from "./ticket-interface";
 import { CreateTicketDTO } from "./dtos/create-ticket-DTO";
-import { UserRepository } from "../user/user-interface";
+import { ListTicketsServiceParams } from "./dtos/list-ticket-DTO";
 
 export class TicketService {
   constructor(private readonly repo: TicketRepository) { }
@@ -46,13 +46,13 @@ export class TicketService {
   async assignToTechnician(ticketId: string, technicianId: string) {
     const ticket = await this.repo.findById(ticketId);
     if (!ticket) throw new AppError("Ticket not found", 404);
- 
+
     if (ticket.technicianId) {
       throw new AppError("Ticket already assigned", 409);
     }
- 
+
     ticket.technicianId = technicianId;
-    ticket.status = TicketStatus.IN_PROGRESS;  
+    ticket.status = TicketStatus.IN_PROGRESS;
 
     return this.repo.update(ticket);
   }
@@ -64,11 +64,17 @@ export class TicketService {
     return ticket;
   }
 
-  async list(query: { page?: any; limit?: any; status?: any; priority?: any, createdAt?: any }) {
-    const page = Math.max(Number(query.page ?? 1), 1);
-    const limit = Math.min(Math.max(Number(query.limit ?? 10), 1), 100);
+  async list(params: ListTicketsServiceParams) {
+    const { userId, role, page, limit, status, priority, createdAt } = params;
 
-    return this.repo.list({ page, limit, status: query.status, priority: query.priority, createdAt: query.createdAt });
+    return this.repo.list({
+      page,
+      limit,
+      status,
+      priority,
+      createdAt,
+      clientId: role === "CLIENT" ? userId : undefined,
+    });
   }
 
   async deleteTicket(ticketId: string): Promise<void> {

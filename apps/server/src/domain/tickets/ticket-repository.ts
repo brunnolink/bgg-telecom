@@ -1,10 +1,9 @@
-
-import { TicketPriority, TicketStatus } from "@prisma/client";
 import { prisma } from "../../infra/prisma/prisma.client";
 import { TicketEntity } from "./ticket-entity";
 import { TicketRepository } from "./ticket-interface";
 import { TicketMapper } from "./ticket-mapper";
 import { AppError } from "../../errors/AppError";
+import { ListTicketsRepoParams } from "./dtos/list-ticket-DTO";
 
 
 export class PrismaTicketRepository implements TicketRepository {
@@ -61,27 +60,28 @@ export class PrismaTicketRepository implements TicketRepository {
 
     }
 
-    async list(params: {
-        page: number;
-        limit: number;
-        status?: TicketStatus;
-        priority?: TicketPriority;
-        createdAt?: string;
-    }): Promise<TicketEntity[]> {
+    async list(params: ListTicketsRepoParams): Promise<TicketEntity[]> {
         const page = Math.max(params.page, 1);
         const limit = Math.min(Math.max(params.limit, 1), 100);
         const skip = (page - 1) * limit;
 
         const tickets = await prisma.ticket.findMany({
             where: {
+                ...(params.clientId ? { clientId: params.clientId } : {}),
                 ...(params.status ? { status: params.status } : {}),
                 ...(params.priority ? { priority: params.priority } : {}),
-                ...(params.createdAt ? {
-                    createdAt: {
-                        gte: new Date(new Date(params.createdAt).setHours(0, 0, 0, 0)),
-                        lte: new Date(new Date(params.createdAt).setHours(23, 59, 59, 999)),
-                    },
-                } : {}),
+                ...(params.createdAt
+                    ? {
+                        createdAt: {
+                            gte: new Date(
+                                new Date(params.createdAt).setHours(0, 0, 0, 0)
+                            ),
+                            lte: new Date(
+                                new Date(params.createdAt).setHours(23, 59, 59, 999)
+                            ),
+                        },
+                    }
+                    : {}),
             },
             orderBy: { createdAt: "desc" },
             skip,

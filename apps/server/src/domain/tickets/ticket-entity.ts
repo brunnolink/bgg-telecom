@@ -9,7 +9,8 @@ export class TicketEntity {
         public status: TicketStatus,
         public priority: TicketPriority,
         public clientId: string,
-        public technicianId?: string
+        public technicianId?: string,
+        public createdAt?: Date,
     ) { }
 
     canEdit(): boolean {

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Auth } from "./pages/Auth";
 import { PrivateRoute } from "./routes/PrivateRoute";
-import { Tickets } from "./pages/tickets";
+import { Tickets } from "./pages/tickets/tickets";
 
 export default function App() {
   return (

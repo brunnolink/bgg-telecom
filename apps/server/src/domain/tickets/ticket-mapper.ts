@@ -12,6 +12,7 @@ export const TicketMapper = {
             db.priority,
             db.clientId,
             db.technicianId ?? undefined,
+            db.createdAt,
         );
     },
 };

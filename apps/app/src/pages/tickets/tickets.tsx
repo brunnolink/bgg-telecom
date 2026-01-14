@@ -1,64 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { Eye, Pencil, Trash2, User as UserIcon, Clock3, Search, Wrench } from "lucide-react";
-import type { Ticket, TicketPriority, TicketStatus } from "../types/model-types";
-import { assignTicketToMe, createTicket, deleteTicket, listTickets, updateTicket } from "../api/tickets";
-import { Topbar } from "../components/Topbar";
+import { Search, UserIcon, Clock3, Wrench } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { listTickets, createTicket, updateTicket, deleteTicket, assignTicketToMe } from "../../api/tickets";
+import { Topbar } from "../../components/Topbar";
+import { useAuth } from "../../contexts/AuthContext";
+import type { Ticket, TicketStatus, TicketPriority } from "../../types";
+import { StatusBadge, PriorityBadge } from "./components/Badges";
+import { ModalShell } from "./components/ModalShell";
+import { TicketCard } from "./components/TicketCard";
+import { formatDateBR } from "./utils";
 
-function StatusBadge({ status }: { status: TicketStatus }) {
-  const map = {
-    OPEN: "bg-blue-100 text-blue-700",
-    IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-    DONE: "bg-green-100 text-green-700",
-  } as const;
-
-  const label =
-    status === "OPEN" ? "Aberto" : status === "IN_PROGRESS" ? "Em Progresso" : "Concluído";
-
-  return <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[status]}`}>{label}</span>;
-}
-
-function PriorityBadge({ priority }: { priority: TicketPriority }) {
-  const map = {
-    LOW: "bg-green-100 text-green-700",
-    MEDIUM: "bg-yellow-100 text-yellow-800",
-    HIGH: "bg-red-100 text-red-700",
-  } as const;
-
-  const label = priority === "LOW" ? "Baixa" : priority === "MEDIUM" ? "Média" : "Alta";
-
-  return <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[priority]}`}>{label}</span>;
-}
-
+ 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-white border rounded-xl px-4 py-3 flex items-baseline justify-between cursor-pointer">
-      <div className="text-sm text-gray-600 cursor-pointer">{label}</div>
-      <div className="text-xl font-semibold cursor-pointer">{value}</div>
-    </div>
-  );
-}
-
-function ModalShell({
-  title,
-  children,
-  onClose,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-xl bg-white rounded-xl border shadow-lg overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer">
-            Fechar
-          </button>
-        </div>
-        <div className="p-4 bg-white">{children}</div>
-      </div>
+      <div className="text-sm text-gray-600">{label}</div>
+      <div className="text-xl font-semibold">{value}</div>
     </div>
   );
 }
@@ -73,17 +29,17 @@ export function Tickets() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | TicketStatus>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<"ALL" | TicketPriority>("ALL");
-
+ 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
   const [cDescription, setCDescription] = useState("");
   const [cPriority, setCPriority] = useState<TicketPriority>("MEDIUM");
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-
+ 
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | null>(null);
-
+ 
   const [eTitle, setETitle] = useState("");
   const [eDescription, setEDescription] = useState("");
   const [eStatus, setEStatus] = useState<TicketStatus>("OPEN");
@@ -171,7 +127,6 @@ export function Tickets() {
     setSelected(ticket);
     setMode("edit");
     setEditError(null);
-
     setETitle(ticket.title);
     setEDescription(ticket.description);
     setEStatus(ticket.status);
@@ -192,7 +147,6 @@ export function Tickets() {
     try {
       setIsUpdating(true);
 
-      // ✅ CLIENT não manda status
       const payload: any = {
         title: eTitle.trim(),
         description: eDescription.trim(),
@@ -252,7 +206,9 @@ export function Tickets() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Topbar />
+
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold leading-tight">
@@ -275,7 +231,7 @@ export function Tickets() {
           <StatCard label="Progresso" value={stats.progress} />
           <StatCard label="Concluídos" value={stats.done} />
         </div>
- 
+  
         <div className="bg-white border rounded-xl p-3">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
@@ -310,91 +266,22 @@ export function Tickets() {
               <option value="HIGH">Alta</option>
             </select>
           </div>
-        </div>
-
-        {/* Tickets */}
+        </div> 
         <div className="space-y-3">
           {filteredTickets.map((ticket) => {
-            const showAssume =
+            const canAssume =
               user?.role === "TECH" && !ticket.technicianId && ticket.status === "OPEN";
 
             return (
-              <div
+              <TicketCard
                 key={ticket.id}
-                className={[
-                  "bg-white border rounded-xl p-4",
-                  "transition-all duration-200",
-                  "hover:shadow-md hover:-translate-y-[1px] hover:border-blue-200",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <h2 className="font-semibold text-base truncate">{ticket.title}</h2>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{ticket.description}</p>
- 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-3">
-                      <span className="inline-flex items-center gap-2">
-                        <UserIcon size={14} />
-                        {ticket.clientName}
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <Clock3 size={14} />
-                        {ticket.createdAt}
-                      </span>
-                    </div>
- 
-                    <div className="mt-2 text-xs text-gray-600 inline-flex items-center gap-2">
-                      <Wrench size={14} className="text-gray-500" />
-                      {ticket.technicianId ? (
-                        <span>Ticket atribuído a um técnico</span>
-                      ) : (
-                        <span>Ticket ainda não atribuído</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <StatusBadge status={ticket.status} />
-                    <PriorityBadge priority={ticket.priority} />
-                  </div>
-                </div>
- 
-                <div className="mt-3 flex justify-end gap-2">
-                  {showAssume && (
-                    <button
-                      onClick={() => handleAssign(ticket)}
-                      className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
-                      title="Assumir ticket"
-                    >
-                      Assumir
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => openView(ticket)}
-                    className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
-                    title="Ver"
-                  >
-                    <Eye size={18} />
-                  </button>
-
-                  <button
-                    onClick={() => openEdit(ticket)}
-                    className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
-                    title="Editar"
-                  >
-                    <Pencil size={18} />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(ticket)}
-                    className="p-2 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 transition cursor-pointer"
-                    title="Excluir"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
+                ticket={ticket}
+                canAssume={!!canAssume}
+                onAssume={() => handleAssign(ticket)}
+                onView={() => openView(ticket)}
+                onEdit={() => openEdit(ticket)}
+                onDelete={() => handleDelete(ticket)}
+              />
             );
           })}
 
@@ -411,17 +298,29 @@ export function Tickets() {
           <form onSubmit={handleCreate} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Título</label>
-              <input className="w-full border rounded-lg px-3 py-2 text-sm" value={cTitle} onChange={(e) => setCTitle(e.target.value)} />
+              <input
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={cTitle}
+                onChange={(e) => setCTitle(e.target.value)}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Descrição</label>
-              <textarea className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]" value={cDescription} onChange={(e) => setCDescription(e.target.value)} />
+              <textarea
+                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
+                value={cDescription}
+                onChange={(e) => setCDescription(e.target.value)}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Prioridade</label>
-              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={cPriority} onChange={(e) => setCPriority(e.target.value as TicketPriority)}>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                value={cPriority}
+                onChange={(e) => setCPriority(e.target.value as TicketPriority)}
+              >
                 <option value="LOW">Baixa</option>
                 <option value="MEDIUM">Média</option>
                 <option value="HIGH">Alta</option>
@@ -431,14 +330,18 @@ export function Tickets() {
             {createError && <p className="text-sm text-red-600">{createError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setIsCreateOpen(false)} className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer"
+              >
                 Cancelar
               </button>
               <button
                 disabled={isSaving}
                 type="submit"
                 className={[
-                  "px-3 py-2 text-sm rounded-lg text-white",
+                  "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
                   isSaving ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700",
                 ].join(" ")}
               >
@@ -469,12 +372,10 @@ export function Tickets() {
 
             <div className="text-xs text-gray-500 flex items-center gap-4">
               <span className="inline-flex items-center gap-2">
-                <UserIcon size={14} />
-                {selected.clientName}
+                <UserIcon size={14} /> {selected.clientName}
               </span>
               <span className="inline-flex items-center gap-2">
-                <Clock3 size={14} />
-                {selected.createdAt}
+                <Clock3 size={14} /> {formatDateBR(selected.createdAt)}
               </span>
             </div>
 
@@ -491,27 +392,38 @@ export function Tickets() {
           <form onSubmit={handleUpdate} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Título</label>
-              <input className="w-full border rounded-lg px-3 py-2 text-sm" value={eTitle} onChange={(e) => setETitle(e.target.value)} />
+              <input
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={eTitle}
+                onChange={(e) => setETitle(e.target.value)}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Descrição</label>
-              <textarea className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]" value={eDescription} onChange={(e) => setEDescription(e.target.value)} />
+              <textarea
+                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
+                value={eDescription}
+                onChange={(e) => setEDescription(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        
               {user?.role === "TECH" ? (
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
-                  <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={eStatus} onChange={(e) => setEStatus(e.target.value as TicketStatus)}>
+                  <select
+                    className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                    value={eStatus}
+                    onChange={(e) => setEStatus(e.target.value as TicketStatus)}
+                  >
                     <option value="OPEN">Aberto</option>
                     <option value="IN_PROGRESS">Em Progresso</option>
                     <option value="DONE">Concluído</option>
                   </select>
                 </div>
               ) : (
-                <div className="md:col-span-1">
+                <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
                   <div className="border rounded-lg px-3 py-2 text-sm bg-gray-50">
                     {eStatus === "OPEN" ? "Aberto" : eStatus === "IN_PROGRESS" ? "Em Progresso" : "Concluído"}
@@ -521,7 +433,11 @@ export function Tickets() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Prioridade</label>
-                <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={ePriority} onChange={(e) => setEPriority(e.target.value as TicketPriority)}>
+                <select
+                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                  value={ePriority}
+                  onChange={(e) => setEPriority(e.target.value as TicketPriority)}
+                >
                   <option value="LOW">Baixa</option>
                   <option value="MEDIUM">Média</option>
                   <option value="HIGH">Alta</option>
@@ -532,7 +448,11 @@ export function Tickets() {
             {editError && <p className="text-sm text-red-600">{editError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setMode(null)} className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setMode(null)}
+                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer"
+              >
                 Cancelar
               </button>
               <button
@@ -540,7 +460,7 @@ export function Tickets() {
                 type="submit"
                 className={[
                   "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
-                  isUpdating ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer",
+                  isUpdating ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700",
                 ].join(" ")}
               >
                 {isUpdating ? "Salvando..." : "Salvar alterações"}

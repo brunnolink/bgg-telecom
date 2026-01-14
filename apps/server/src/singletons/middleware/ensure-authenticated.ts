@@ -3,7 +3,7 @@ import { jwtSingleton } from './jwt';
  
 
 export type AuthUser = {
-    sub: string; // userId
+    id: string; 
     role: "CLIENT" | "TECH";
 };
 declare global {
@@ -31,7 +31,7 @@ export function ensureAuthenticated(
         const decoded = jwtSingleton.verify(token);
 
         req.user = {
-            sub: decoded.sub,
+            id: decoded.sub,
             role: decoded.role,
         };
 

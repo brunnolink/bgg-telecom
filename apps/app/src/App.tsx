@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Auth } from "./pages/Auth";
 import { PrivateRoute } from "./routes/PrivateRoute";
 import { Tickets } from "./pages/tickets/tickets";
+import { Auth, Register } from "./pages/auth";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Auth />} />
-
+        <Route path="/register" element={<Register />} />
         <Route
           path="/tickets"
           element={

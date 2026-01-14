@@ -1,8 +1,13 @@
 import type { CreateTicketPayload, Ticket, UpdateTicketPayload } from "../types";
 import { api } from "./client";
 
-export async function listTickets() {
-    const { data } = await api.get<Ticket[]>("/tickets/list");
+export async function listTickets(params?: {
+    page?: number;
+    limit?: number;
+}) {
+    const { data } = await api.get("/tickets/list", {
+        params,
+    });
     return data;
 }
 

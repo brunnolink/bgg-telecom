@@ -18,8 +18,8 @@ type User = {
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  login: (payload: { token: string; user: User }) => void; // ✅
+  loading: boolean;
+  login: (data: { token: string; user: User }) => void;
   logout: () => void;
 };
 
@@ -28,29 +28,32 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ reidrata ao carregar
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
 
     if (token && userStr) {
-      setIsAuthenticated(true);
       setUser(JSON.parse(userStr));
+      setIsAuthenticated(true);
     }
+
+    setLoading(false);
   }, []);
 
-  // ✅ login centralizado (serve pra CLIENT e TECH)
-  function login(payload: { token: string; user: User }) {
-    localStorage.setItem("token", payload.token);
-    localStorage.setItem("user", JSON.stringify(payload.user));
-    setUser(payload.user);
+  function login(data: { token: string; user: User }) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    setUser(data.user);
     setIsAuthenticated(true);
   }
 
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     setUser(null);
     setIsAuthenticated(false);
   }
@@ -60,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated,
-        setUser,
+        loading,
         login,
         logout,
       }}

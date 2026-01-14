@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { login } from "../api/auth";
-import { registerUser } from "../api/user";
+import { login } from "../../api/auth";
+import { registerUser } from "../../api/user";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 type Tab = "login" | "register";
 

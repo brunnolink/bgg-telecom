@@ -4,7 +4,7 @@ import {
   useEffect,
   useState,
   type ReactNode,
-  } from "react";
+} from "react";
 
 type Role = "CLIENT" | "TECH";
 
@@ -19,6 +19,7 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
+  login: (payload: { token: string; user: User }) => void; // ✅
   logout: () => void;
 };
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 🔑 REIDRATA LOGIN AO CARREGAR A APP
+  // ✅ reidrata ao carregar
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
@@ -38,6 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(JSON.parse(userStr));
     }
   }, []);
+
+  // ✅ login centralizado (serve pra CLIENT e TECH)
+  function login(payload: { token: string; user: User }) {
+    localStorage.setItem("token", payload.token);
+    localStorage.setItem("user", JSON.stringify(payload.user));
+    setUser(payload.user);
+    setIsAuthenticated(true);
+  }
 
   function logout() {
     localStorage.removeItem("token");
@@ -52,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated,
         setUser,
+        login,
         logout,
       }}
     >

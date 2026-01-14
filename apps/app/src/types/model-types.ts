@@ -7,16 +7,18 @@ export type Ticket = {
   description: string;
   status: TicketStatus;
   priority: TicketPriority;
-  author: string;
-  createdAt: string;  
+  clientName: string;
+  technicianId?: string | null;
+  createdAt: string;
 };
 
 export type CreateTicketPayload = {
   title: string;
   description: string;
   priority: TicketPriority;
+  clientName: string;
 };
- 
+
 
 export type UpdateTicketPayload = Partial<{
   title: string;

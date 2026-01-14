@@ -8,7 +8,7 @@ type Tab = "login" | "register";
 
 export function Auth() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login: doLogin } = useAuth();
 
   const [tab, setTab] = useState<Tab>("login");
 
@@ -31,9 +31,7 @@ export function Auth() {
 
     try {
       const data = await login(email, password);
-
-      setUser(data.user);
-
+      doLogin({ token: data.token, user: data.user });
       navigate("/tickets", { replace: true });
     } catch (err: any) {
       setError(err?.response?.data?.message ?? "Erro no login");

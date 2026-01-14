@@ -1,4 +1,4 @@
-import { Request, Response } from "express"; 
+import { Request, Response } from "express";
 import { TicketService } from "../../ticket-service";
 import { makeTicketService } from "../../factories/make-ticket";
 
@@ -10,7 +10,20 @@ export class TicketController {
   }
 
   createTicket = async (req: Request, res: Response) => {
-    const ticket = await this.service.create(req.body);
+    const { title, description, priority } = req.body;
+
+    if (!req.user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+    // console.log("requser:", req.user);
+    const userId = req.user.id; 
+
+    const ticket = await this.service.create({
+      title,
+      description,
+      priority,
+      clientId: userId,
+    });
     return res.status(201).json(ticket);
   };
 

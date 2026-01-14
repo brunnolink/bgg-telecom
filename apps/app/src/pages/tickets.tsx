@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { Eye, Pencil, Trash2, User as UserIcon, Clock3, Search } from "lucide-react";
+import { Eye, Pencil, Trash2, User as UserIcon, Clock3, Search, Wrench } from "lucide-react";
 import type { Ticket, TicketPriority, TicketStatus } from "../types/model-types";
-import { createTicket, deleteTicket, listTickets, updateTicket } from "../api/tickets";
+import { assignTicketToMe, createTicket, deleteTicket, listTickets, updateTicket } from "../api/tickets";
+import { Topbar } from "../components/Topbar";
 
 function StatusBadge({ status }: { status: TicketStatus }) {
   const map = {
@@ -12,17 +13,9 @@ function StatusBadge({ status }: { status: TicketStatus }) {
   } as const;
 
   const label =
-    status === "OPEN"
-      ? "Aberto"
-      : status === "IN_PROGRESS"
-      ? "Em Progresso"
-      : "Concluído";
+    status === "OPEN" ? "Aberto" : status === "IN_PROGRESS" ? "Em Progresso" : "Concluído";
 
-  return (
-    <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[status]}`}>
-      {label}
-    </span>
-  );
+  return <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[status]}`}>{label}</span>;
 }
 
 function PriorityBadge({ priority }: { priority: TicketPriority }) {
@@ -32,21 +25,16 @@ function PriorityBadge({ priority }: { priority: TicketPriority }) {
     HIGH: "bg-red-100 text-red-700",
   } as const;
 
-  const label =
-    priority === "LOW" ? "Baixa" : priority === "MEDIUM" ? "Média" : "Alta";
+  const label = priority === "LOW" ? "Baixa" : priority === "MEDIUM" ? "Média" : "Alta";
 
-  return (
-    <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[priority]}`}>
-      {label}
-    </span>
-  );
+  return <span className={`text-xs px-3 py-1 rounded-full font-medium ${map[priority]}`}>{label}</span>;
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white border rounded-xl px-4 py-3 flex items-baseline justify-between">
-      <div className="text-sm text-gray-600">{label}</div>
-      <div className="text-xl font-semibold">{value}</div>
+    <div className="bg-white border rounded-xl px-4 py-3 flex items-baseline justify-between cursor-pointer">
+      <div className="text-sm text-gray-600 cursor-pointer">{label}</div>
+      <div className="text-xl font-semibold cursor-pointer">{value}</div>
     </div>
   );
 }
@@ -65,10 +53,7 @@ function ModalShell({
       <div className="w-full max-w-xl bg-white rounded-xl border shadow-lg overflow-hidden">
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="font-semibold">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
+          <button onClick={onClose} className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer">
             Fechar
           </button>
         </div>
@@ -89,7 +74,6 @@ export function Tickets() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | TicketStatus>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<"ALL" | TicketPriority>("ALL");
 
-  // create modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
   const [cDescription, setCDescription] = useState("");
@@ -97,11 +81,9 @@ export function Tickets() {
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // view/edit modal
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | null>(null);
 
-  // edit fields
   const [eTitle, setETitle] = useState("");
   const [eDescription, setEDescription] = useState("");
   const [eStatus, setEStatus] = useState<TicketStatus>("OPEN");
@@ -133,8 +115,7 @@ export function Tickets() {
         t.description.toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus = statusFilter === "ALL" ? true : t.status === statusFilter;
-      const matchesPriority =
-        priorityFilter === "ALL" ? true : t.priority === priorityFilter;
+      const matchesPriority = priorityFilter === "ALL" ? true : t.priority === priorityFilter;
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
@@ -170,6 +151,7 @@ export function Tickets() {
         title: cTitle.trim(),
         description: cDescription.trim(),
         priority: cPriority,
+        clientName: user?.name ?? "Cliente",
       });
       setIsCreateOpen(false);
       await loadTickets();
@@ -209,12 +191,16 @@ export function Tickets() {
 
     try {
       setIsUpdating(true);
-      await updateTicket(selected.id, {
+
+      // ✅ CLIENT não manda status
+      const payload: any = {
         title: eTitle.trim(),
         description: eDescription.trim(),
-        status: eStatus,
         priority: ePriority,
-      });
+      };
+      if (user?.role === "TECH") payload.status = eStatus;
+
+      await updateTicket(selected.id, payload);
 
       setMode(null);
       setSelected(null);
@@ -238,6 +224,15 @@ export function Tickets() {
     }
   }
 
+  async function handleAssign(ticket: Ticket) {
+    try {
+      await assignTicketToMe(ticket.id);
+      await loadTickets();
+    } catch (err: any) {
+      alert(err?.response?.data?.message ?? "Erro ao assumir ticket");
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -256,8 +251,8 @@ export function Tickets() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Topbar />
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold leading-tight">
@@ -268,21 +263,19 @@ export function Tickets() {
 
           <button
             onClick={openCreate}
-            className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700 transition cursor-pointer"
           >
             + Novo Ticket
           </button>
         </div>
-
-        {/* Stats */}
+ 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="Total" value={stats.total} />
           <StatCard label="Aberto" value={stats.open} />
           <StatCard label="Progresso" value={stats.progress} />
           <StatCard label="Concluídos" value={stats.done} />
         </div>
-
-        {/* Filters */}
+ 
         <div className="bg-white border rounded-xl p-3">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
@@ -296,7 +289,7 @@ export function Tickets() {
             </div>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white"
+              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
             >
@@ -307,7 +300,7 @@ export function Tickets() {
             </select>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white"
+              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white cursor-pointer"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value as any)}
             >
@@ -319,70 +312,91 @@ export function Tickets() {
           </div>
         </div>
 
-        {/* Tickets list */}
+        {/* Tickets */}
         <div className="space-y-3">
-          {filteredTickets.map((ticket) => (
-            <div
-              key={ticket.id}
-              className={[
-                "bg-white border rounded-xl p-4",
-                "transition-all duration-200",
-                "hover:shadow-md hover:-translate-y-[1px] hover:border-blue-200",
-              ].join(" ")}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-base truncate">{ticket.title}</h2>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {ticket.description}
-                  </p>
+          {filteredTickets.map((ticket) => {
+            const showAssume =
+              user?.role === "TECH" && !ticket.technicianId && ticket.status === "OPEN";
 
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-3">
-                    <span className="inline-flex items-center gap-2">
-                      <UserIcon size={14} />
-                      {ticket.author}
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <Clock3 size={14} />
-                      {ticket.createdAt}
-                    </span>
+            return (
+              <div
+                key={ticket.id}
+                className={[
+                  "bg-white border rounded-xl p-4",
+                  "transition-all duration-200",
+                  "hover:shadow-md hover:-translate-y-[1px] hover:border-blue-200",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h2 className="font-semibold text-base truncate">{ticket.title}</h2>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{ticket.description}</p>
+ 
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-3">
+                      <span className="inline-flex items-center gap-2">
+                        <UserIcon size={14} />
+                        {ticket.clientName}
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <Clock3 size={14} />
+                        {ticket.createdAt}
+                      </span>
+                    </div>
+ 
+                    <div className="mt-2 text-xs text-gray-600 inline-flex items-center gap-2">
+                      <Wrench size={14} className="text-gray-500" />
+                      {ticket.technicianId ? (
+                        <span>Ticket atribuído a um técnico</span>
+                      ) : (
+                        <span>Ticket ainda não atribuído</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <StatusBadge status={ticket.status} />
+                    <PriorityBadge priority={ticket.priority} />
                   </div>
                 </div>
+ 
+                <div className="mt-3 flex justify-end gap-2">
+                  {showAssume && (
+                    <button
+                      onClick={() => handleAssign(ticket)}
+                      className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
+                      title="Assumir ticket"
+                    >
+                      Assumir
+                    </button>
+                  )}
 
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <StatusBadge status={ticket.status} />
-                  <PriorityBadge priority={ticket.priority} />
+                  <button
+                    onClick={() => openView(ticket)}
+                    className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
+                    title="Ver"
+                  >
+                    <Eye size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => openEdit(ticket)}
+                    className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
+                    title="Editar"
+                  >
+                    <Pencil size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(ticket)}
+                    className="p-2 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 transition cursor-pointer"
+                    title="Excluir"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
-
-              {/* actions row */}
-              <div className="mt-3 flex justify-end gap-2">
-                <button
-                  onClick={() => openView(ticket)}
-                  className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition"
-                  title="Ver"
-                >
-                  <Eye size={18} />
-                </button>
-
-                <button
-                  onClick={() => openEdit(ticket)}
-                  className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition"
-                  title="Editar"
-                >
-                  <Pencil size={18} />
-                </button>
-
-                <button
-                  onClick={() => handleDelete(ticket)}
-                  className="p-2 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 transition"
-                  title="Excluir"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredTickets.length === 0 && (
             <div className="text-sm text-gray-600 bg-white border rounded-xl p-4">
@@ -391,36 +405,23 @@ export function Tickets() {
           )}
         </div>
       </div>
-
-      {/* ===== Modal Create ===== */}
+ 
       {isCreateOpen && (
         <ModalShell title="Novo Ticket" onClose={() => setIsCreateOpen(false)}>
           <form onSubmit={handleCreate} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Título</label>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-                value={cTitle}
-                onChange={(e) => setCTitle(e.target.value)}
-              />
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" value={cTitle} onChange={(e) => setCTitle(e.target.value)} />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Descrição</label>
-              <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
-                value={cDescription}
-                onChange={(e) => setCDescription(e.target.value)}
-              />
+              <textarea className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]" value={cDescription} onChange={(e) => setCDescription(e.target.value)} />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Prioridade</label>
-              <select
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
-                value={cPriority}
-                onChange={(e) => setCPriority(e.target.value as TicketPriority)}
-              >
+              <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={cPriority} onChange={(e) => setCPriority(e.target.value as TicketPriority)}>
                 <option value="LOW">Baixa</option>
                 <option value="MEDIUM">Média</option>
                 <option value="HIGH">Alta</option>
@@ -430,11 +431,7 @@ export function Tickets() {
             {createError && <p className="text-sm text-red-600">{createError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50"
-              >
+              <button type="button" onClick={() => setIsCreateOpen(false)} className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer">
                 Cancelar
               </button>
               <button
@@ -451,8 +448,7 @@ export function Tickets() {
           </form>
         </ModalShell>
       )}
-
-      {/* ===== Modal View ===== */}
+ 
       {selected && mode === "view" && (
         <ModalShell title="Detalhes do Ticket" onClose={() => setMode(null)}>
           <div className="space-y-3">
@@ -463,9 +459,7 @@ export function Tickets() {
 
             <div>
               <div className="text-xs text-gray-500">Descrição</div>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                {selected.description}
-              </div>
+              <div className="text-sm text-gray-700 whitespace-pre-wrap">{selected.description}</div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -476,60 +470,58 @@ export function Tickets() {
             <div className="text-xs text-gray-500 flex items-center gap-4">
               <span className="inline-flex items-center gap-2">
                 <UserIcon size={14} />
-                {selected.author}
+                {selected.clientName}
               </span>
               <span className="inline-flex items-center gap-2">
                 <Clock3 size={14} />
                 {selected.createdAt}
               </span>
             </div>
+
+            <div className="text-xs text-gray-600 inline-flex items-center gap-2">
+              <Wrench size={14} className="text-gray-500" />
+              {selected.technicianId ? "Ticket atribuído a um técnico" : "Ticket ainda não atribuído"}
+            </div>
           </div>
         </ModalShell>
       )}
-
-      {/* ===== Modal Edit ===== */}
+ 
       {selected && mode === "edit" && (
         <ModalShell title="Editar Ticket" onClose={() => setMode(null)}>
           <form onSubmit={handleUpdate} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Título</label>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-                value={eTitle}
-                onChange={(e) => setETitle(e.target.value)}
-              />
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" value={eTitle} onChange={(e) => setETitle(e.target.value)} />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Descrição</label>
-              <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
-                value={eDescription}
-                onChange={(e) => setEDescription(e.target.value)}
-              />
+              <textarea className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]" value={eDescription} onChange={(e) => setEDescription(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
-                  value={eStatus}
-                  onChange={(e) => setEStatus(e.target.value as TicketStatus)}
-                >
-                  <option value="OPEN">Aberto</option>
-                  <option value="IN_PROGRESS">Em Progresso</option>
-                  <option value="DONE">Concluído</option>
-                </select>
-              </div>
+        
+              {user?.role === "TECH" ? (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={eStatus} onChange={(e) => setEStatus(e.target.value as TicketStatus)}>
+                    <option value="OPEN">Aberto</option>
+                    <option value="IN_PROGRESS">Em Progresso</option>
+                    <option value="DONE">Concluído</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <div className="border rounded-lg px-3 py-2 text-sm bg-gray-50">
+                    {eStatus === "OPEN" ? "Aberto" : eStatus === "IN_PROGRESS" ? "Em Progresso" : "Concluído"}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium mb-1">Prioridade</label>
-                <select
-                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
-                  value={ePriority}
-                  onChange={(e) => setEPriority(e.target.value as TicketPriority)}
-                >
+                <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white" value={ePriority} onChange={(e) => setEPriority(e.target.value as TicketPriority)}>
                   <option value="LOW">Baixa</option>
                   <option value="MEDIUM">Média</option>
                   <option value="HIGH">Alta</option>
@@ -540,19 +532,15 @@ export function Tickets() {
             {editError && <p className="text-sm text-red-600">{editError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50"
-              >
+              <button type="button" onClick={() => setMode(null)} className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer">
                 Cancelar
               </button>
               <button
                 disabled={isUpdating}
                 type="submit"
                 className={[
-                  "px-3 py-2 text-sm rounded-lg text-white",
-                  isUpdating ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700",
+                  "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
+                  isUpdating ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer",
                 ].join(" ")}
               >
                 {isUpdating ? "Salvando..." : "Salvar alterações"}

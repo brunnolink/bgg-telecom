@@ -1,6 +1,6 @@
 import { UserEntity } from "./user-entity";
-import { CreateUserDTO } from "./user.dto";
- 
+import { CreateUserDTO } from "./dtos/user.dto";
+
 export interface UserRepository {
     create(data: CreateUserDTO): Promise<UserEntity>;
     findByEmail(email: string): Promise<UserEntity | null>;

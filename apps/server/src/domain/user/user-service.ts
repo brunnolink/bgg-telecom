@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { PrismaUserRepository } from "./user-repository";
 import { UserEntity } from "./user-entity";
 import { AppError } from "../../errors/AppError";
-import { CreateUserDTO, UpdateUserDTO } from "./user.dto";
+import { CreateUserDTO, UpdateUserDTO } from "./dtos/user.dto";
 import bcrypt from "bcryptjs";
 import { jwtSingleton } from "../../singletons/middleware/jwt";
 

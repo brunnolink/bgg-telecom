@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 import { UserMapper } from "./user.mapper";
 import { UserEntity } from "./user-entity";
 import { AppError } from "../../errors/AppError";
+import { UpdateUserDTO } from "./dtos/user.dto";
 
 export class PrismaUserRepository implements PrismaUserRepository {
     async findById(userId: string): Promise<UserEntity | null> {
@@ -49,13 +50,12 @@ export class PrismaUserRepository implements PrismaUserRepository {
         return users.map(UserMapper.toEntity);
     }
 
-    async update(id: string, data: Partial<Pick<UserEntity, "name" | "password" | "role">>): Promise<UserEntity> {
+    async update(id: string, data: UpdateUserDTO): Promise<UserEntity> {
         const updated = await prisma.user.update({
             where: { id },
             data: {
                 ...(data.name ? { name: data.name.trim() } : {}),
                 ...(data.password ? { password: data.password } : {}),
-                ...(data.role ? { role: data.role } : {}),
             },
         });
         return UserMapper.toEntity(updated);

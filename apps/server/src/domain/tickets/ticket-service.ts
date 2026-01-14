@@ -32,8 +32,6 @@ export class TicketService {
     if (data.title !== undefined) ticket.title = data.title;
     if (data.description !== undefined) ticket.description = data.description;
     if (data.priority !== undefined) ticket.priority = data.priority;
-    if (data.status !== undefined) ticket.status = data.status;
-
     if (data.status !== undefined) {
       if (role !== "TECH") throw new AppError("Only TECH can change ticket status", 403);
       ticket.status = data.status;

@@ -1,6 +1,12 @@
 import { Search, UserIcon, Clock3, Wrench } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { listTickets, createTicket, updateTicket, deleteTicket, assignTicketToMe } from "../../api/tickets";
+import {
+  listTickets,
+  createTicket,
+  updateTicket,
+  deleteTicket,
+  assignTicketToMe,
+} from "../../api/tickets";
 import { Topbar } from "../../components/Topbar";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Ticket, TicketStatus, TicketPriority } from "../../types";
@@ -9,7 +15,6 @@ import { ModalShell } from "./components/ModalShell";
 import { TicketCard } from "./components/TicketCard";
 import { formatDateBR } from "./utils";
 
- 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-white border rounded-xl px-4 py-3 flex items-baseline justify-between cursor-pointer">
@@ -22,24 +27,29 @@ function StatCard({ label, value }: { label: string; value: number }) {
 export function Tickets() {
   const { user } = useAuth();
 
+  const [page, setPage] = useState(1);
+  const LIMIT = 5;
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | TicketStatus>("ALL");
-  const [priorityFilter, setPriorityFilter] = useState<"ALL" | TicketPriority>("ALL");
- 
+  const [priorityFilter, setPriorityFilter] = useState<"ALL" | TicketPriority>(
+    "ALL"
+  );
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
   const [cDescription, setCDescription] = useState("");
   const [cPriority, setCPriority] = useState<TicketPriority>("MEDIUM");
   const [isSaving, setIsSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
- 
+
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | null>(null);
- 
+
   const [eTitle, setETitle] = useState("");
   const [eDescription, setEDescription] = useState("");
   const [eStatus, setEStatus] = useState<TicketStatus>("OPEN");
@@ -51,7 +61,10 @@ export function Tickets() {
     try {
       setLoading(true);
       setError(null);
-      const data = await listTickets();
+      const data = await listTickets({
+        page,
+        limit: LIMIT,
+      });
       setTickets(data);
     } catch (err: any) {
       setError(err?.response?.data?.message ?? "Erro ao carregar tickets");
@@ -62,7 +75,7 @@ export function Tickets() {
 
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [page]);
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
@@ -70,8 +83,10 @@ export function Tickets() {
         t.title.toLowerCase().includes(search.toLowerCase()) ||
         t.description.toLowerCase().includes(search.toLowerCase());
 
-      const matchesStatus = statusFilter === "ALL" ? true : t.status === statusFilter;
-      const matchesPriority = priorityFilter === "ALL" ? true : t.priority === priorityFilter;
+      const matchesStatus =
+        statusFilter === "ALL" ? true : t.status === statusFilter;
+      const matchesPriority =
+        priorityFilter === "ALL" ? true : t.priority === priorityFilter;
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
@@ -208,13 +223,14 @@ export function Tickets() {
       <Topbar />
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-      
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold leading-tight">
               Olá, {user?.name?.split(" ")[0]}! 👋
             </h1>
-            <p className="text-sm text-gray-600">Acompanhe seus tickets de suporte</p>
+            <p className="text-sm text-gray-600">
+              Acompanhe seus tickets de suporte
+            </p>
           </div>
 
           <button
@@ -224,18 +240,21 @@ export function Tickets() {
             + Novo Ticket
           </button>
         </div>
- 
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="Total" value={stats.total} />
           <StatCard label="Aberto" value={stats.open} />
           <StatCard label="Progresso" value={stats.progress} />
           <StatCard label="Concluídos" value={stats.done} />
         </div>
-  
+
         <div className="bg-white border rounded-xl p-3">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 placeholder="Buscar tickets..."
                 className="w-full border rounded-lg pl-10 pr-3 py-2 text-sm bg-gray-50 focus:bg-white"
@@ -266,11 +285,13 @@ export function Tickets() {
               <option value="HIGH">Alta</option>
             </select>
           </div>
-        </div> 
+        </div>
         <div className="space-y-3">
           {filteredTickets.map((ticket) => {
             const canAssume =
-              user?.role === "TECH" && !ticket.technicianId && ticket.status === "OPEN";
+              user?.role === "TECH" &&
+              !ticket.technicianId &&
+              ticket.status === "OPEN";
 
             return (
               <TicketCard
@@ -291,8 +312,27 @@ export function Tickets() {
             </div>
           )}
         </div>
+        <div className="flex justify-center items-center gap-3 mt-6">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+          >
+            Anterior
+          </button>
+
+          <span className="text-sm text-gray-600">Página {page}</span>
+
+          <button
+            disabled={tickets.length < LIMIT}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+          >
+            Próxima
+          </button>
+        </div>
       </div>
- 
+
       {isCreateOpen && (
         <ModalShell title="Novo Ticket" onClose={() => setIsCreateOpen(false)}>
           <form onSubmit={handleCreate} className="space-y-3">
@@ -306,7 +346,9 @@ export function Tickets() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Descrição</label>
+              <label className="block text-sm font-medium mb-1">
+                Descrição
+              </label>
               <textarea
                 className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
                 value={cDescription}
@@ -315,7 +357,9 @@ export function Tickets() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Prioridade</label>
+              <label className="block text-sm font-medium mb-1">
+                Prioridade
+              </label>
               <select
                 className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
                 value={cPriority}
@@ -327,7 +371,9 @@ export function Tickets() {
               </select>
             </div>
 
-            {createError && <p className="text-sm text-red-600">{createError}</p>}
+            {createError && (
+              <p className="text-sm text-red-600">{createError}</p>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -342,7 +388,9 @@ export function Tickets() {
                 type="submit"
                 className={[
                   "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
-                  isSaving ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700",
+                  isSaving
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700",
                 ].join(" ")}
               >
                 {isSaving ? "Salvando..." : "Criar"}
@@ -351,7 +399,7 @@ export function Tickets() {
           </form>
         </ModalShell>
       )}
- 
+
       {selected && mode === "view" && (
         <ModalShell title="Detalhes do Ticket" onClose={() => setMode(null)}>
           <div className="space-y-3">
@@ -362,7 +410,9 @@ export function Tickets() {
 
             <div>
               <div className="text-xs text-gray-500">Descrição</div>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">{selected.description}</div>
+              <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                {selected.description}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -381,12 +431,14 @@ export function Tickets() {
 
             <div className="text-xs text-gray-600 inline-flex items-center gap-2">
               <Wrench size={14} className="text-gray-500" />
-              {selected.technicianId ? "Ticket atribuído a um técnico" : "Ticket ainda não atribuído"}
+              {selected.technicianId
+                ? "Ticket atribuído a um técnico"
+                : "Ticket ainda não atribuído"}
             </div>
           </div>
         </ModalShell>
       )}
- 
+
       {selected && mode === "edit" && (
         <ModalShell title="Editar Ticket" onClose={() => setMode(null)}>
           <form onSubmit={handleUpdate} className="space-y-3">
@@ -400,7 +452,9 @@ export function Tickets() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Descrição</label>
+              <label className="block text-sm font-medium mb-1">
+                Descrição
+              </label>
               <textarea
                 className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
                 value={eDescription}
@@ -411,7 +465,9 @@ export function Tickets() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {user?.role === "TECH" ? (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Status
+                  </label>
                   <select
                     className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
                     value={eStatus}
@@ -424,19 +480,29 @@ export function Tickets() {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Status
+                  </label>
                   <div className="border rounded-lg px-3 py-2 text-sm bg-gray-50">
-                    {eStatus === "OPEN" ? "Aberto" : eStatus === "IN_PROGRESS" ? "Em Progresso" : "Concluído"}
+                    {eStatus === "OPEN"
+                      ? "Aberto"
+                      : eStatus === "IN_PROGRESS"
+                      ? "Em Progresso"
+                      : "Concluído"}
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-1">Prioridade</label>
+                <label className="block text-sm font-medium mb-1">
+                  Prioridade
+                </label>
                 <select
                   className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
                   value={ePriority}
-                  onChange={(e) => setEPriority(e.target.value as TicketPriority)}
+                  onChange={(e) =>
+                    setEPriority(e.target.value as TicketPriority)
+                  }
                 >
                   <option value="LOW">Baixa</option>
                   <option value="MEDIUM">Média</option>
@@ -460,7 +526,9 @@ export function Tickets() {
                 type="submit"
                 className={[
                   "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
-                  isUpdating ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700",
+                  isUpdating
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700",
                 ].join(" ")}
               >
                 {isUpdating ? "Salvando..." : "Salvar alterações"}

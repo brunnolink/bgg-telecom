@@ -10,6 +10,7 @@ export interface TicketRepository {
         limit: number;
         status?: TicketStatus;
         priority?: TicketPriority;
+        createdAt?: string;
     }): Promise<TicketEntity[]>;
     deleteTicket(ticketId: string): Promise<void>;
 }

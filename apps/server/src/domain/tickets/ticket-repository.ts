@@ -22,6 +22,7 @@ export class PrismaTicketRepository implements TicketRepository {
                     description: ticket.description,
                     status: ticket.status,
                     priority: ticket.priority,
+                    client_name: ticket.clientName,
                     client: { connect: { id: ticket.clientId } },
                 },
             });
@@ -65,6 +66,7 @@ export class PrismaTicketRepository implements TicketRepository {
         limit: number;
         status?: TicketStatus;
         priority?: TicketPriority;
+        createdAt?: string;
     }): Promise<TicketEntity[]> {
         const page = Math.max(params.page, 1);
         const limit = Math.min(Math.max(params.limit, 1), 100);
@@ -74,6 +76,12 @@ export class PrismaTicketRepository implements TicketRepository {
             where: {
                 ...(params.status ? { status: params.status } : {}),
                 ...(params.priority ? { priority: params.priority } : {}),
+                ...(params.createdAt ? {
+                    createdAt: {
+                        gte: new Date(new Date(params.createdAt).setHours(0, 0, 0, 0)),
+                        lte: new Date(new Date(params.createdAt).setHours(23, 59, 59, 999)),
+                    },
+                } : {}),
             },
             orderBy: { createdAt: "desc" },
             skip,

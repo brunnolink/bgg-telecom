@@ -7,6 +7,7 @@ export const TicketMapper = {
             db.id,
             db.title,
             db.description,
+            db.client_name,
             db.status,
             db.priority,
             db.clientId,

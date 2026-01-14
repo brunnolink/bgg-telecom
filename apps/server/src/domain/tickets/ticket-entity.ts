@@ -5,6 +5,7 @@ export class TicketEntity {
         public readonly id: string,
         public title: string,
         public description: string,
+        public clientName: string,
         public status: TicketStatus,
         public priority: TicketPriority,
         public clientId: string,

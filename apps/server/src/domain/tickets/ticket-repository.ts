@@ -22,8 +22,7 @@ export class PrismaTicketRepository implements TicketRepository {
                     description: ticket.description,
                     status: ticket.status,
                     priority: ticket.priority,
-                    clientId: ticket.clientId,
-                    technicianId: ticket.technicianId ?? null,
+                    client: { connect: { id: ticket.clientId } },
                 },
             });
             return TicketMapper.toEntity(created);

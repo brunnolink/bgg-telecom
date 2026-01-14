@@ -15,6 +15,6 @@ TicketRoute.put("/update-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", 
 
 TicketRoute.get("/ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.getTicketById);
 
-TicketRoute.get("/tickets", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.listTickets);
+TicketRoute.get("/list", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.listTickets);
 
 TicketRoute.delete("/delete-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.deleteTicket);

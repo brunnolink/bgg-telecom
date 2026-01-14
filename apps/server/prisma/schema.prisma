@@ -48,6 +48,7 @@ model Ticket {
   description String
   status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
+  client_name String
  
   clientId String
   client   User @relation("TicketsCreated", fields: [clientId], references: [id])

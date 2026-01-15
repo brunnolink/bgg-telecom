@@ -18,7 +18,7 @@ import { formatDateBR } from "./utils";
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-slate-900/70 border border-white/10 rounded-xl px-4 py-3 flex items-baseline justify-between backdrop-blur">
-      <div className="text-sm text-slate-400">{label}</div>
+      <div className="text-sm text-slate-100">{label}</div>
       <div className="text-xl font-semibold text-white">{value}</div>
     </div>
   );

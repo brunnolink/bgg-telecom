@@ -36,20 +36,20 @@ export function TicketCard({
             {ticket.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-3">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-100 mt-3">
             <span className="inline-flex items-center gap-2">
-              <UserIcon size={14} className="text-slate-400" />
+              <UserIcon size={14} className="text-slate-100" />
               {ticket.clientName}
             </span>
 
             <span className="inline-flex items-center gap-2">
-              <Clock3 size={14} className="text-slate-400" />
+              <Clock3 size={14} className="text-slate-100" />
               {formatDateBR(ticket.createdAt)}
             </span>
           </div>
 
           <div className="mt-2 text-xs text-slate-300 inline-flex items-center gap-2">
-            <Wrench size={14} className="text-slate-400" />
+            <Wrench size={14} className="text-slate-100" />
             {ticket.technicianId ? (
               <span>Ticket atribuído a um técnico</span>
             ) : (

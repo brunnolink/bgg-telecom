@@ -1,10 +1,16 @@
 import express from "express";
 import cors from "cors";
 import { appRouter } from "./http/routes";
+import dotenv from "dotenv";
 
 const app = express();
-
-app.use(cors({ origin: "http://localhost:5173" }));
+dotenv.config();
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN,
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(appRouter);
 const PORT = process.env.PORT || 3000;

@@ -73,7 +73,7 @@ model TicketComment {
   message   String
 
   ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])

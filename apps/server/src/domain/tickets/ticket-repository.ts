@@ -4,6 +4,7 @@ import { TicketRepository } from "./ticket-interface";
 import { TicketMapper } from "./ticket-mapper";
 import { AppError } from "../../errors/AppError";
 import { ListTicketsRepoParams } from "./dtos/list-ticket-DTO";
+import { CreateCommentDTO } from "./dtos/create-comment-DTO";
 
 
 export class PrismaTicketRepository implements TicketRepository {
@@ -75,5 +76,28 @@ export class PrismaTicketRepository implements TicketRepository {
 
     async deleteTicket(ticketId: string): Promise<void> {
         await prisma.ticket.delete({ where: { id: ticketId } });
+    }
+
+    async createTicketComment(data: CreateCommentDTO) {
+        return await prisma.ticketComment.create({
+            data: {
+                ticketId: data.ticketId,
+                authorId: data.authorId,
+                message: data.message,
+            },
+            include: {
+                author: { select: { id: true, name: true, role: true } },
+            },
+        });
+    }
+
+    async listCommentsByTicketId(ticketId: string) {
+        return await prisma.ticketComment.findMany({
+            where: { ticketId },
+            orderBy: { createdAt: "asc" },
+            include: {
+                author: { select: { id: true, name: true, role: true } },
+            },
+        });
     }
 }

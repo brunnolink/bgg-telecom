@@ -10,6 +10,13 @@ export const ticketRoute = Router();
 const ticketController = new TicketController();
 
 ticketRoute.post("/create-ticket", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.createTicket);
+ 
+ticketRoute.post(
+  "/create-comments/:id",
+  ensureAuthenticated,
+  ensureRoles(["TECH", "CLIENT"]),
+  ticketController.createTicketComment
+);
 
 ticketRoute.put("/update-ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.updateTicket);
 
@@ -18,6 +25,13 @@ ticketRoute.patch(
   ensureAuthenticated,
   ensureRoles(["TECH"]),
   ticketController.assignTicket
+);
+
+ticketRoute.get(
+  "/:id/comments",
+  ensureAuthenticated,
+  ensureRoles(["TECH", "CLIENT"]),
+  ticketController.listTicketComments
 );
 
 ticketRoute.get("/ticket/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]), ticketController.getTicketById);

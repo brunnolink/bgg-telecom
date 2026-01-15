@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { TicketService } from "../../ticket-service";
 import { makeTicketService } from "../../factories/make-ticket";
+import { AppError } from "../../../../errors/AppError";
 
 export class TicketController {
   private readonly service: TicketService;
@@ -124,6 +125,41 @@ export class TicketController {
     } catch (error) {
       console.error("Error deleting ticket:", error);
       return res.status(500).json({ error: "Internal server error" });
+    }
+  };
+
+  listTicketComments = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+
+      const ticketId = req.params.id as string;
+      const userId = req.user.id;
+      const role = req.user.role;
+
+      const comments = await this.service.listTicketComments(ticketId, userId, role);
+      return res.json(comments);
+    } catch (error) {
+      console.log(error);
+      throw new AppError("Error to list comments", 500);
+    }
+  };
+
+  createTicketComment = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+
+      const ticketId = req.params.id as string;
+      const userId = req.user.id;
+      const role = req.user.role;
+
+      const { message } = req.body;
+
+      const comment = await this.service.createTicketComment(ticketId, userId, role, message);
+      return res.status(201).json(comment);
+
+    } catch (error) {
+      console.log(error);
+      throw new AppError("Error to create comment", 500);
     }
   };
 }

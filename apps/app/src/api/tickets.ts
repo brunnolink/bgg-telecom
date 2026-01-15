@@ -35,3 +35,13 @@ export async function deleteTicket(id: string) {
     const { data } = await api.delete(`/tickets/delete-ticket/${id}`);
     return data;
 }
+
+export async function listComments(ticketId: string) {
+    const { data } = await api.get(`/tickets/${ticketId}/comments`);
+    return data;
+}
+
+export async function createComment(ticketId: string, message: string) {
+    const { data } = await api.post(`/tickets/create-comments/${ticketId}`, { message });
+    return data;
+}

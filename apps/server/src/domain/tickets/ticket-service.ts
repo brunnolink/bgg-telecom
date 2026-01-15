@@ -5,6 +5,7 @@ import { TicketEntity } from "./ticket-entity";
 import { TicketRepository } from "./ticket-interface";
 import { CreateTicketDTO } from "./dtos/create-ticket-DTO";
 import { ListTicketsServiceParams } from "./dtos/list-ticket-DTO";
+import { CreateCommentDTO } from "./dtos/create-comment-DTO";
 
 export class TicketService {
   constructor(private readonly repo: TicketRepository) { }
@@ -81,5 +82,42 @@ export class TicketService {
       throw new AppError("Ticket not found", 404);
     }
     await this.repo.deleteTicket(ticketId);
+  }
+
+  async listTicketComments(ticketId: string, userId: string, role: "CLIENT" | "TECH") {
+    const ticket = await this.repo.findById(ticketId);
+    if (!ticket) throw new AppError("Ticket not found", 404);
+
+    if (role === "CLIENT" && ticket.clientId !== userId) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    return this.repo.listCommentsByTicketId(ticketId);
+  }
+
+  async createTicketComment(
+    ticketId: string,
+    userId: string,
+    role: "CLIENT" | "TECH",
+    message: string
+  ) {
+    if (!message?.trim()) {
+      throw new AppError("Message is required", 400);
+    }
+
+    const ticket = await this.repo.findById(ticketId);
+    if (!ticket) throw new AppError("Ticket not found", 404);
+
+    if (role === "CLIENT" && ticket.clientId !== userId) {
+      throw new AppError("Forbidden", 403);
+    }
+
+    const dto: CreateCommentDTO = {
+      ticketId,
+      authorId: userId,
+      message: message.trim(),
+    };
+
+    return this.repo.createTicketComment(dto);
   }
 }

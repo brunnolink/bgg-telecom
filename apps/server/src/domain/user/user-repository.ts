@@ -6,16 +6,8 @@ import { UpdateUserDTO } from "./dtos/user.dto";
 
 export class PrismaUserRepository implements PrismaUserRepository {
     async findById(userId: string): Promise<UserEntity | null> {
-        try {
-            const user = await prisma.user.findUnique({ where: { id: userId } });
-            return user ? UserMapper.toEntity(user) : null;
-        } catch (error) {
-            console.log(error)
-            if (error instanceof AppError) {
-                throw error
-            }
-            throw new AppError("Error finding user by ID", 500);
-        }
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        return user ? UserMapper.toEntity(user) : null;
     }
 
     async findByEmail(email: string): Promise<UserEntity | null> {

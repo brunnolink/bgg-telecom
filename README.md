@@ -52,11 +52,11 @@ Com o backend rodando, abra outro terminal, vá até a pasta bbg-telecom/apps/ap
 
 Todas as credenciais estão abaixo, inclusive com mais uma demonstração de seguimento do que fazer.
 
-## Como rodar e variáveis de ambientes:
+## Como rodar e variáveis de ambientes para colocar nas env:
 
 ### Frontend (`/apps/app/.env`)
 ```
-env: VITE_API_URL=http://localhost:3000 
+VITE_API_URL=http://localhost:3000 
 VITE_PORT=5173
 ```
 

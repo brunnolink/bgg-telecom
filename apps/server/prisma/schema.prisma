@@ -35,6 +35,7 @@ model User {
  
   ticketsCreated   Ticket[] @relation("TicketsCreated")
   ticketsAssigned  Ticket[] @relation("TicketsAssigned")
+  comments TicketComment[] 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,7 +50,8 @@ model Ticket {
   status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
   client_name String
- 
+  comments TicketComment[] 
+  
   clientId String
   client   User @relation("TicketsCreated", fields: [clientId], references: [id])
 
@@ -64,4 +66,22 @@ model Ticket {
   @@index([createdAt])
 
   @@map("tickets")
+}
+
+model TicketComment {
+  id        String   @id @default(uuid())
+  message   String
+
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ticketId])
+  @@index([authorId])
+  @@map("ticket_comments")
 }

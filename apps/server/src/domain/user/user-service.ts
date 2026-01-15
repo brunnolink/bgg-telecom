@@ -66,10 +66,4 @@ export class UserService {
     await this.getUserById(userId);
     return this.repo.update(userId, data);
   }
-
-  async delete(userId: string) {
-    await this.getUserById(userId);
-    await this.repo.delete(userId);
-    return { deleted: true };
-  }
 }

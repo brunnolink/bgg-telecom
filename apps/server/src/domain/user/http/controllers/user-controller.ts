@@ -30,10 +30,4 @@ export class UserController {
     const user = await this.service.update(userId, req.body);
     return res.json(user.toPublic());
   };
-
-  deleteUser = async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
-    await this.service.delete(userId);
-    return res.status(204).send();
-  };
 }

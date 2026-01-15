@@ -60,8 +60,4 @@ export class PrismaUserRepository implements PrismaUserRepository {
         });
         return UserMapper.toEntity(updated);
     }
-
-    async delete(id: string): Promise<void> {
-        await prisma.user.delete({ where: { id } });
-    }
 }

@@ -18,5 +18,3 @@ userRoute.get("/:id", ensureAuthenticated, ensureRoles(["TECH"]), user.getUserBy
 userRoute.get("/user-list", ensureAuthenticated, ensureRoles(["TECH"]), user.list);
 
 userRoute.put("/update-user/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]),  user.updateUser);
-
-userRoute.delete("/delete-user/:id", ensureAuthenticated, ensureRoles(["TECH"]), user.deleteUser);

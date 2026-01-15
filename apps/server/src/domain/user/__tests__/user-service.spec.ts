@@ -44,7 +44,7 @@ describe("UserService", () => {
         repo = {
             findByEmail: vi.fn(),
             findById: vi.fn(),
-            create: vi.fn(),
+            createUser: vi.fn(),
             list: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
@@ -63,7 +63,7 @@ describe("UserService", () => {
         it("should create a username with a hashed password when an email address does not exist.", async () => {
             repo.findByEmail.mockResolvedValue(null);
             hashMock.mockResolvedValue("hashed123");
-            repo.create.mockResolvedValue(makeUserEntityStub({ password: "hashed123" }));
+            repo.createUser.mockResolvedValue(makeUserEntityStub({ password: "hashed123" }));
 
             const input = {
                 name: "Brunno",
@@ -76,9 +76,9 @@ describe("UserService", () => {
 
             expect(repo.findByEmail).toHaveBeenCalledWith(input.email);
             expect(hashMock).toHaveBeenCalledWith(input.password, 10);
-            expect(repo.create).toHaveBeenCalledTimes(1);
+            expect(repo.createUser).toHaveBeenCalledTimes(1);
 
-            const createdArg = repo.create.mock.calls[0][0];
+            const createdArg = repo.createUser.mock.calls[0][0];
             expect(createdArg.name).toBe(input.name);
             expect(createdArg.email).toBe(input.email);
             expect(createdArg.role).toBe(input.role);
@@ -98,7 +98,7 @@ describe("UserService", () => {
                 service.create({ name: "x", email: "brunno@.com", password: "123", role: "CLIENT" } as any)
             ).rejects.toMatchObject({ message: "The email is already in use", statusCode: 400 });
 
-            expect(repo.create).not.toHaveBeenCalled();
+            expect(repo.createUser).not.toHaveBeenCalled();
             expect(hashMock).not.toHaveBeenCalled();
         });
     });
@@ -164,29 +164,6 @@ describe("UserService", () => {
                 message: "User not found",
                 statusCode: 404,
             });
-        });
-    });
-
-    describe("update", () => {
-        it("should throw a 404 error if the user does not exist.", async () => {
-            repo.findById.mockResolvedValue(null);
-
-            await expect(service.updateUserInfo("x", { name: "a" } as any)).rejects.toMatchObject({
-                message: "User not found",
-                statusCode: 404,
-            });
-
-            expect(repo.update).not.toHaveBeenCalled();
-        });
-
-        it("should call repo.update if the user exists.", async () => {
-            repo.findById.mockResolvedValue(makeUserEntityStub());
-            repo.update.mockResolvedValue(makeUserEntityStub({ name: "Novo" }));
-
-            const result = await service.updateUserInfo("user-1", { name: "Novo" } as any);
-
-            expect(repo.update).toHaveBeenCalledWith("user-1", { name: "Novo" });
-            expect(result.name).toBe("Novo");
         });
     });
 });

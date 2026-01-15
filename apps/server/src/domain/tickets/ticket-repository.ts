@@ -13,54 +13,36 @@ export class PrismaTicketRepository implements TicketRepository {
     }
 
     async create(ticket: TicketEntity): Promise<TicketEntity> {
-        try {
-            const created = await prisma.ticket.create({
-                data: {
-                    id: ticket.id,
-                    title: ticket.title,
-                    description: ticket.description,
-                    status: ticket.status,
-                    priority: ticket.priority,
-                    client_name: ticket.clientName,
-                    client: { connect: { id: ticket.clientId } },
-                },
-            });
-            return TicketMapper.toEntity(created);
-        } catch (error) {
-            console.log(error)
-            if (error instanceof AppError) {
-                throw error
-            }
-            throw new AppError("Error to create ticket", 500);
-        }
-
+        const created = await prisma.ticket.create({
+            data: {
+                id: ticket.id,
+                title: ticket.title,
+                description: ticket.description,
+                status: ticket.status,
+                priority: ticket.priority,
+                client_name: ticket.clientName,
+                client: { connect: { id: ticket.clientId } },
+            },
+        });
+        return TicketMapper.toEntity(created);
     }
 
     async update(ticket: TicketEntity): Promise<TicketEntity> {
-        try {
-            const updated = await prisma.ticket.update({
-                where: { id: ticket.id },
-                data: {
-                    title: ticket.title,
-                    description: ticket.description,
-                    status: ticket.status,
-                    priority: ticket.priority,
-                    technicianId: ticket.technicianId ?? null,
-                },
-            });
-
-            return TicketMapper.toEntity(updated);
-        } catch (error) {
-            console.log(error)
-            if (error instanceof AppError) {
-                throw error
-            }
-            throw new AppError("Error to update ticket", 500);
-        }
-
+        const updated = await prisma.ticket.update({
+            where: { id: ticket.id },
+            data: {
+                title: ticket.title,
+                description: ticket.description,
+                status: ticket.status,
+                priority: ticket.priority,
+                technicianId: ticket.technicianId ?? null,
+            },
+        });
+        return TicketMapper.toEntity(updated);
     }
 
-    async list(params: ListTicketsRepoParams): Promise<TicketEntity[]> {
+    async ticketList(params: ListTicketsRepoParams): Promise<TicketEntity[]> {
+
         const page = Math.max(params.page, 1);
         const limit = Math.min(Math.max(params.limit, 1), 100);
         const skip = (page - 1) * limit;

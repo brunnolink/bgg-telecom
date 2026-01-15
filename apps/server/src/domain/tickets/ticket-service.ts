@@ -65,7 +65,7 @@ export class TicketService {
   async list(params: ListTicketsServiceParams) {
     const { userId, role, page, limit, status, priority, createdAt } = params;
 
-    return this.repo.list({
+    return this.repo.ticketList({
       page,
       limit,
       status,

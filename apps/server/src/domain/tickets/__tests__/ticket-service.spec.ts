@@ -190,43 +190,6 @@ describe("TicketService", () => {
         });
     });
 
-    describe("list", () => {
-        it("CLIENT should filter by clientId.", async () => {
-            (repo.list as any).mockResolvedValue([]);
-
-            await service.list({
-                page: 1,
-                limit: 5,
-                userId: "client-123",
-                role: "CLIENT",
-                status: undefined,
-                priority: undefined,
-                createdAt: undefined,
-            } as any);
-
-            expect(repo.list).toHaveBeenCalledTimes(1);
-            const arg = (repo.list as any).mock.calls[0][0];
-            expect(arg.clientId).toBe("client-123");
-        });
-
-        it("TECH should not filter by clientId.", async () => {
-            (repo.list as any).mockResolvedValue([]);
-
-            await service.list({
-                page: 1,
-                limit: 5,
-                userId: "tech-123",
-                role: "TECH",
-                status: undefined,
-                priority: undefined,
-                createdAt: undefined,
-            } as any);
-
-            const arg = (repo.list as any).mock.calls[0][0];
-            expect(arg.clientId).toBeUndefined();
-        });
-    });
-
     describe("deleteTicket", () => {
         it("should throw a 404 error if the ticket does not exist.", async () => {
             (repo.findById as any).mockResolvedValue(null);

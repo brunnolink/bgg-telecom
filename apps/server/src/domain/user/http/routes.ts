@@ -15,6 +15,4 @@ userRoute.post("/auth", auth.login);
 
 userRoute.get("/:id", ensureAuthenticated, ensureRoles(["TECH"]), user.getUserById);
 
-userRoute.get("/user-list", ensureAuthenticated, ensureRoles(["TECH"]), user.list);
-
 userRoute.put("/update-user/:id", ensureAuthenticated, ensureRoles(["TECH", "CLIENT"]),  user.updateUser);

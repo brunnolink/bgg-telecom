@@ -167,30 +167,11 @@ describe("UserService", () => {
         });
     });
 
-    describe("list", () => {
-        it("should convert page/limit and pass role + skip/take to repo.list.", async () => {
-            repo.list.mockResolvedValue([]);
-
-            await service.list({ page: "2", limit: "5", role: "TECH" });
-
-            expect(repo.list).toHaveBeenCalledTimes(1);
-            expect(repo.list).toHaveBeenCalledWith({ role: "TECH", skip: 5, take: 5 });
-        });
-
-        it("should use defaults when page/limit is not available.", async () => {
-            repo.list.mockResolvedValue([]);
-
-            await service.list({});
-
-            expect(repo.list).toHaveBeenCalledWith({ role: undefined, skip: 0, take: 20 });
-        });
-    });
-
     describe("update", () => {
         it("should throw a 404 error if the user does not exist.", async () => {
             repo.findById.mockResolvedValue(null);
 
-            await expect(service.update("x", { name: "a" } as any)).rejects.toMatchObject({
+            await expect(service.updateUserInfo("x", { name: "a" } as any)).rejects.toMatchObject({
                 message: "User not found",
                 statusCode: 404,
             });
@@ -202,7 +183,7 @@ describe("UserService", () => {
             repo.findById.mockResolvedValue(makeUserEntityStub());
             repo.update.mockResolvedValue(makeUserEntityStub({ name: "Novo" }));
 
-            const result = await service.update("user-1", { name: "Novo" } as any);
+            const result = await service.updateUserInfo("user-1", { name: "Novo" } as any);
 
             expect(repo.update).toHaveBeenCalledWith("user-1", { name: "Novo" });
             expect(result.name).toBe("Novo");

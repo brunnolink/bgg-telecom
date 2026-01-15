@@ -6,6 +6,6 @@ export interface TicketRepository {
     findById(id: string): Promise<TicketEntity | null>;
     create(ticket: TicketEntity): Promise<TicketEntity>;
     update(ticket: TicketEntity): Promise<TicketEntity>;
-    list(params: ListTicketsRepoParams): Promise<TicketEntity[]>;
+    ticketList(params: ListTicketsRepoParams): Promise<TicketEntity[]>;
     deleteTicket(ticketId: string): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { makeUserService } from "../../factories/user-function";
+import { makeUserService } from "../../factories/make-user-service";
 import { UserService } from "../../user-service";
 
 export class AuthController {
@@ -10,10 +10,15 @@ export class AuthController {
   }
 
   login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    const result = await this.service.login(email, password);
+      const result = await this.service.login(email, password);
 
-    return res.json(result);
+      return res.json(result);
+    } catch (error) {
+      console.error("Error during login:", error);
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
   };
 }

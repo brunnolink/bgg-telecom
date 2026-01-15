@@ -21,33 +21,35 @@ export function TicketCard({
   return (
     <div
       className={[
-        "bg-white border rounded-xl p-4",
+        "bg-slate-900/70 border border-white/10 rounded-xl p-4 backdrop-blur",
         "transition-all duration-200",
-        "hover:shadow-md hover:-translate-y-[1px] hover:border-blue-200",
+        "hover:bg-slate-900/90 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-600/10",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="font-semibold text-base truncate">{ticket.title}</h2>
+          <h2 className="font-semibold text-base truncate text-white">
+            {ticket.title}
+          </h2>
 
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          <p className="text-sm text-slate-300 mt-1 line-clamp-2">
             {ticket.description}
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-3">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-3">
             <span className="inline-flex items-center gap-2">
-              <UserIcon size={14} />
+              <UserIcon size={14} className="text-slate-400" />
               {ticket.clientName}
             </span>
 
             <span className="inline-flex items-center gap-2">
-              <Clock3 size={14} />
+              <Clock3 size={14} className="text-slate-400" />
               {formatDateBR(ticket.createdAt)}
             </span>
           </div>
 
-          <div className="mt-2 text-xs text-gray-600 inline-flex items-center gap-2">
-            <Wrench size={14} className="text-gray-500" />
+          <div className="mt-2 text-xs text-slate-300 inline-flex items-center gap-2">
+            <Wrench size={14} className="text-slate-400" />
             {ticket.technicianId ? (
               <span>Ticket atribuído a um técnico</span>
             ) : (
@@ -66,7 +68,7 @@ export function TicketCard({
         {canAssume && (
           <button
             onClick={onAssume}
-            className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
+            className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer shadow-lg shadow-blue-600/20"
             title="Assumir ticket"
           >
             Assumir
@@ -75,7 +77,7 @@ export function TicketCard({
 
         <button
           onClick={onView}
-          className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
+          className="p-2 rounded-lg border border-white/10 bg-slate-950/40 hover:bg-slate-950/70 transition cursor-pointer text-white"
           title="Ver"
         >
           <Eye size={18} />
@@ -83,7 +85,7 @@ export function TicketCard({
 
         <button
           onClick={onEdit}
-          className="p-2 rounded-lg border bg-white hover:bg-gray-50 transition cursor-pointer"
+          className="p-2 rounded-lg border border-white/10 bg-slate-950/40 hover:bg-slate-950/70 transition cursor-pointer text-white"
           title="Editar"
         >
           <Pencil size={18} />
@@ -91,7 +93,7 @@ export function TicketCard({
 
         <button
           onClick={onDelete}
-          className="p-2 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 transition cursor-pointer"
+          className="p-2 rounded-lg border border-red-500/30 text-red-300 bg-slate-950/40 hover:bg-red-500/10 transition cursor-pointer"
           title="Excluir"
         >
           <Trash2 size={18} />

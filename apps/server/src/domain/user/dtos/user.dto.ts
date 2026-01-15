@@ -6,5 +6,6 @@ export type CreateUserDTO = {
   password: string;
   role: Role;
 };
+ 
 
-export type UpdateUserDTO = Partial<Pick<CreateUserDTO, "name" | "password">>;
+export type UpdateUserDTO = Partial<Pick<CreateUserDTO, "name" | "password" | "email">>;

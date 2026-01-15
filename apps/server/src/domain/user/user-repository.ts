@@ -1,5 +1,4 @@
 import { prisma } from "../../infra/prisma/prisma.client";
-import { Role } from "@prisma/client";
 import { UserMapper } from "./user.mapper";
 import { UserEntity } from "./user-entity";
 import { AppError } from "../../errors/AppError";
@@ -26,7 +25,7 @@ export class PrismaUserRepository implements PrismaUserRepository {
         return user ? UserMapper.toEntity(user) : null;
     }
 
-    async create(entity: UserEntity): Promise<UserEntity> {
+    async createUser(entity: UserEntity): Promise<UserEntity> {
         const created = await prisma.user.create({
             data: {
                 id: entity.id,
@@ -39,18 +38,8 @@ export class PrismaUserRepository implements PrismaUserRepository {
         return UserMapper.toEntity(created);
     }
 
-    async list(params?: { role?: Role; skip?: number; take?: number }): Promise<UserEntity[]> {
-        const { role, skip = 0, take = 20 } = params ?? {};
-        const users = await prisma.user.findMany({
-            where: role ? { role } : undefined,
-            skip,
-            take,
-            orderBy: { createdAt: "desc" },
-        });
-        return users.map(UserMapper.toEntity);
-    }
+    async updateUserInfo(id: string, data: UpdateUserDTO): Promise<UserEntity> {
 
-    async update(id: string, data: UpdateUserDTO): Promise<UserEntity> {
         const updated = await prisma.user.update({
             where: { id },
             data: {
@@ -58,6 +47,6 @@ export class PrismaUserRepository implements PrismaUserRepository {
                 ...(data.password ? { password: data.password } : {}),
             },
         });
-        return UserMapper.toEntity(updated);
+        return UserMapper.toEntity(updated); //implementar se sobrar tempo
     }
 }

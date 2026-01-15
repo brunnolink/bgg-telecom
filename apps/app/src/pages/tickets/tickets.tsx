@@ -1,4 +1,4 @@
-import { Search, UserIcon, Clock3, Wrench } from "lucide-react";
+import { Search, User as UserIcon, Clock3, Wrench } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import {
   listTickets,
@@ -17,9 +17,9 @@ import { formatDateBR } from "./utils";
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white border rounded-xl px-4 py-3 flex items-baseline justify-between cursor-pointer">
-      <div className="text-sm text-gray-600">{label}</div>
-      <div className="text-xl font-semibold">{value}</div>
+    <div className="bg-slate-900/70 border border-white/10 rounded-xl px-4 py-3 flex items-baseline justify-between backdrop-blur">
+      <div className="text-sm text-slate-400">{label}</div>
+      <div className="text-xl font-semibold text-white">{value}</div>
     </div>
   );
 }
@@ -50,6 +50,9 @@ export function Tickets() {
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | null>(null);
 
+  const [deleteTarget, setDeleteTarget] = useState<Ticket | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [eTitle, setETitle] = useState("");
   const [eDescription, setEDescription] = useState("");
   const [eStatus, setEStatus] = useState<TicketStatus>("OPEN");
@@ -61,10 +64,12 @@ export function Tickets() {
     try {
       setLoading(true);
       setError(null);
+
       const data = await listTickets({
         page,
         limit: LIMIT,
       });
+
       setTickets(data);
     } catch (err: any) {
       setError(err?.response?.data?.message ?? "Erro ao carregar tickets");
@@ -77,6 +82,10 @@ export function Tickets() {
     loadTickets();
   }, [page]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, priorityFilter]);
+
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
       const matchesSearch =
@@ -85,6 +94,7 @@ export function Tickets() {
 
       const matchesStatus =
         statusFilter === "ALL" ? true : t.status === statusFilter;
+
       const matchesPriority =
         priorityFilter === "ALL" ? true : t.priority === priorityFilter;
 
@@ -142,6 +152,7 @@ export function Tickets() {
     setSelected(ticket);
     setMode("edit");
     setEditError(null);
+
     setETitle(ticket.title);
     setEDescription(ticket.description);
     setEStatus(ticket.status);
@@ -181,15 +192,22 @@ export function Tickets() {
     }
   }
 
-  async function handleDelete(ticket: Ticket) {
-    const ok = confirm(`Excluir o ticket "${ticket.title}"?`);
-    if (!ok) return;
+  function handleDelete(ticket: Ticket) {
+    setDeleteTarget(ticket);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
 
     try {
-      await deleteTicket(ticket.id);
+      setIsDeleting(true);
+      await deleteTicket(deleteTarget.id);
+      setDeleteTarget(null);
       await loadTickets();
     } catch (err: any) {
       alert(err?.response?.data?.message ?? "Erro ao excluir ticket");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -204,38 +222,44 @@ export function Tickets() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 py-6">Carregando tickets...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+        <div className="max-w-6xl mx-auto px-4 py-6 text-slate-200">
+          Carregando tickets...
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 py-6 text-red-600">{error}</div>
+      <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
+        <div className="max-w-6xl mx-auto px-4 py-6 text-red-300">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full relative overflow-hidden bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_60%)]" />
+      <div className="absolute -top-40 -left-40 h-105 w-105 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 h-105 w-105 rounded-full bg-cyan-500/10 blur-3xl" />
+
       <Topbar />
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <div className="relative max-w-6xl mx-auto px-4 py-6 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold leading-tight">
+            <h1 className="text-xl font-semibold leading-tight text-white">
               Olá, {user?.name?.split(" ")[0]}! 👋
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-300">
               Acompanhe seus tickets de suporte
             </p>
           </div>
 
           <button
             onClick={openCreate}
-            className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700 transition cursor-pointer"
+            className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700 transition cursor-pointer shadow-lg shadow-blue-600/20"
           >
             + Novo Ticket
           </button>
@@ -247,24 +271,23 @@ export function Tickets() {
           <StatCard label="Progresso" value={stats.progress} />
           <StatCard label="Concluídos" value={stats.done} />
         </div>
-
-        <div className="bg-white border rounded-xl p-3">
+        <div className="bg-slate-900/60 border border-white/10 rounded-xl p-3 backdrop-blur">
           <div className="flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
               <Search
                 size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 placeholder="Buscar tickets..."
-                className="w-full border rounded-lg pl-10 pr-3 py-2 text-sm bg-gray-50 focus:bg-white"
+                className="w-full rounded-lg pl-10 pr-3 py-2 text-sm bg-slate-950/60 border border-white/10 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white cursor-pointer"
+              className="rounded-lg px-3 py-2 text-sm md:w-44 bg-slate-950/60 border border-white/10 text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/40"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
             >
@@ -275,7 +298,7 @@ export function Tickets() {
             </select>
 
             <select
-              className="border rounded-lg px-3 py-2 text-sm md:w-44 bg-white cursor-pointer"
+              className="rounded-lg px-3 py-2 text-sm md:w-44 bg-slate-950/60 border border-white/10 text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/40"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value as any)}
             >
@@ -286,6 +309,7 @@ export function Tickets() {
             </select>
           </div>
         </div>
+
         <div className="space-y-3">
           {filteredTickets.map((ticket) => {
             const canAssume =
@@ -307,26 +331,27 @@ export function Tickets() {
           })}
 
           {filteredTickets.length === 0 && (
-            <div className="text-sm text-gray-600 bg-white border rounded-xl p-4">
+            <div className="text-sm text-slate-300 bg-slate-900/60 border border-white/10 rounded-xl p-4 backdrop-blur">
               Nenhum ticket encontrado.
             </div>
           )}
         </div>
+
         <div className="flex justify-center items-center gap-3 mt-6">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
-            className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+            className="px-3 py-2 border border-white/10 rounded-lg text-sm text-white bg-slate-900/60 hover:bg-slate-900/90 disabled:opacity-50 cursor-pointer backdrop-blur"
           >
             Anterior
           </button>
 
-          <span className="text-sm text-gray-600">Página {page}</span>
+          <span className="text-sm text-slate-300">Página {page}</span>
 
           <button
             disabled={tickets.length < LIMIT}
             onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+            className="px-3 py-2 border border-white/10 rounded-lg text-sm text-white bg-slate-900/60 hover:bg-slate-900/90 disabled:opacity-50 cursor-pointer backdrop-blur"
           >
             Próxima
           </button>
@@ -337,31 +362,33 @@ export function Tickets() {
         <ModalShell title="Novo Ticket" onClose={() => setIsCreateOpen(false)}>
           <form onSubmit={handleCreate} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Título</label>
+              <label className="block text-sm font-medium mb-1 text-slate-200">
+                Título
+              </label>
               <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={cTitle}
                 onChange={(e) => setCTitle(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-200">
                 Descrição
               </label>
               <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
+                className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm min-h-[110px] focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={cDescription}
                 onChange={(e) => setCDescription(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-200">
                 Prioridade
               </label>
               <select
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={cPriority}
                 onChange={(e) => setCPriority(e.target.value as TicketPriority)}
               >
@@ -372,14 +399,14 @@ export function Tickets() {
             </div>
 
             {createError && (
-              <p className="text-sm text-red-600">{createError}</p>
+              <p className="text-sm text-red-300">{createError}</p>
             )}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(false)}
-                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer"
+                className="px-3 py-2 text-sm rounded-lg border border-white/10 bg-slate-900/60 text-white hover:bg-slate-900/90 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -404,13 +431,13 @@ export function Tickets() {
         <ModalShell title="Detalhes do Ticket" onClose={() => setMode(null)}>
           <div className="space-y-3">
             <div>
-              <div className="text-xs text-gray-500">Título</div>
-              <div className="font-semibold">{selected.title}</div>
+              <div className="text-xs text-slate-400">Título</div>
+              <div className="font-semibold text-white">{selected.title}</div>
             </div>
 
             <div>
-              <div className="text-xs text-gray-500">Descrição</div>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap">
+              <div className="text-xs text-slate-400">Descrição</div>
+              <div className="text-sm text-slate-200 whitespace-pre-wrap">
                 {selected.description}
               </div>
             </div>
@@ -420,7 +447,7 @@ export function Tickets() {
               <PriorityBadge priority={selected.priority} />
             </div>
 
-            <div className="text-xs text-gray-500 flex items-center gap-4">
+            <div className="text-xs text-slate-400 flex items-center gap-4">
               <span className="inline-flex items-center gap-2">
                 <UserIcon size={14} /> {selected.clientName}
               </span>
@@ -429,8 +456,8 @@ export function Tickets() {
               </span>
             </div>
 
-            <div className="text-xs text-gray-600 inline-flex items-center gap-2">
-              <Wrench size={14} className="text-gray-500" />
+            <div className="text-xs text-slate-300 inline-flex items-center gap-2">
+              <Wrench size={14} className="text-slate-400" />
               {selected.technicianId
                 ? "Ticket atribuído a um técnico"
                 : "Ticket ainda não atribuído"}
@@ -443,20 +470,22 @@ export function Tickets() {
         <ModalShell title="Editar Ticket" onClose={() => setMode(null)}>
           <form onSubmit={handleUpdate} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Título</label>
+              <label className="block text-sm font-medium mb-1 text-slate-200">
+                Título
+              </label>
               <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={eTitle}
                 onChange={(e) => setETitle(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-200">
                 Descrição
               </label>
               <textarea
-                className="w-full border rounded-lg px-3 py-2 text-sm min-h-[110px]"
+                className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm min-h-[110px] focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                 value={eDescription}
                 onChange={(e) => setEDescription(e.target.value)}
               />
@@ -465,11 +494,11 @@ export function Tickets() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {user?.role === "TECH" ? (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-slate-200">
                     Status
                   </label>
                   <select
-                    className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                    className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                     value={eStatus}
                     onChange={(e) => setEStatus(e.target.value as TicketStatus)}
                   >
@@ -480,10 +509,10 @@ export function Tickets() {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-slate-200">
                     Status
                   </label>
-                  <div className="border rounded-lg px-3 py-2 text-sm bg-gray-50">
+                  <div className="border border-white/10 rounded-lg px-3 py-2 text-sm bg-slate-950/70 text-white">
                     {eStatus === "OPEN"
                       ? "Aberto"
                       : eStatus === "IN_PROGRESS"
@@ -494,11 +523,11 @@ export function Tickets() {
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 text-slate-200">
                   Prioridade
                 </label>
                 <select
-                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white cursor-pointer"
+                  className="w-full border border-white/10 bg-slate-950/70 text-white rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/40"
                   value={ePriority}
                   onChange={(e) =>
                     setEPriority(e.target.value as TicketPriority)
@@ -511,13 +540,13 @@ export function Tickets() {
               </div>
             </div>
 
-            {editError && <p className="text-sm text-red-600">{editError}</p>}
+            {editError && <p className="text-sm text-red-300">{editError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setMode(null)}
-                className="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50 cursor-pointer"
+                className="px-3 py-2 text-sm rounded-lg border border-white/10 bg-slate-900/60 text-white hover:bg-slate-900/90 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -535,6 +564,49 @@ export function Tickets() {
               </button>
             </div>
           </form>
+        </ModalShell>
+      )}
+
+      {deleteTarget && (
+        <ModalShell
+          title="Excluir Ticket"
+          onClose={() => setDeleteTarget(null)}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-200">
+              Tem certeza que deseja excluir o ticket:
+            </p>
+
+            <div className="bg-slate-900/60 border border-white/10 rounded-lg p-3 text-white">
+              <strong>{deleteTarget.title}</strong>
+            </div>
+
+            <p className="text-sm text-red-300">
+              Essa ação não pode ser desfeita.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-3 py-2 text-sm rounded-lg border border-white/10 bg-slate-900/60 text-white hover:bg-slate-900/90"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className={[
+                  "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
+                  isDeleting
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700",
+                ].join(" ")}
+              >
+                {isDeleting ? "Excluindo..." : "Excluir"}
+              </button>
+            </div>
+          </div>
         </ModalShell>
       )}
     </div>

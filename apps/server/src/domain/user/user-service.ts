@@ -21,7 +21,7 @@ export class UserService {
       role: data.role,
     });
 
-    return this.repo.create(entity);
+    return this.repo.createUser(entity);
   }
 
   async login(email: string, password: string) {
@@ -54,16 +54,8 @@ export class UserService {
     return user;
   }
 
-  async list(query: { role?: any; page?: any; limit?: any }) {
-    const page = Math.max(Number(query.page ?? 1), 1);
-    const limit = Math.min(Math.max(Number(query.limit ?? 20), 1), 100);
-    const skip = (page - 1) * limit;
-
-    return this.repo.list({ role: query.role, skip, take: limit });
-  }
-
-  async update(userId: string, data: UpdateUserDTO) {
+  async updateUserInfo(userId: string, data: UpdateUserDTO) {
     await this.getUserById(userId);
-    return this.repo.update(userId, data);
+    return this.repo.updateUserInfo(userId, data);
   }
 }

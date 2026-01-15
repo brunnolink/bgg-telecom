@@ -11,7 +11,6 @@ function roleLabel(role?: string) {
 export function Topbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,56 +38,52 @@ export function Topbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
- 
-        <div className="flex items-center gap-3">
-   
-          <img
-            src="../public/logo.png"
-            alt="Logo"
-            className="h-8 w-8 rounded-lg"
-            draggable={false}
-          />
-          <span className="font-semibold text-lg">TicketFlow</span>
-        </div>
-  
-        <div className="relative" ref={wrapRef}>
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className={[
-              "cursor-pointer h-9 w-9 rounded-full bg-blue-600 text-white font-semibold",
-              "flex items-center justify-center",
-              "hover:bg-blue-700 transition",
-              "focus:outline-none focus:ring-2 focus:ring-blue-300",
-            ].join(" ")}
-            aria-label="Abrir menu do perfil"
-          >
-            {initials}
-          </button>
-
-          {open && (
-            <div className="absolute right-0 mt-2 w-72 bg-white border rounded-xl shadow-lg overflow-hidden">
-              <div className="p-4 border-b">
-                <div className="font-semibold leading-tight">{user?.name}</div>
-                <div className="text-sm text-gray-600 mt-1">
-                  {user?.email}
-                </div>
-                <div className="mt-2 inline-flex text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                  {roleLabel(user?.role)}
-                </div>
+    <header className="sticky top-0 z-40">
+      <div className="bg-white/5 backdrop-blur border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3"> 
+            <div className="leading-tight">
+              <div className="text-white font-semibold tracking-wide">
+                BGG-TELECOM
               </div>
-
-              <div className="p-2">
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50 text-red-600"
-                >
-                  Sair
-                </button>
+              <div className="text-xs text-blue-200/80">
+                Sistema de tickets e suporte
               </div>
             </div>
-          )}
+          </div>
+
+          <div className="relative" ref={wrapRef}>
+            <button
+              onClick={() => setOpen((v) => !v)}
+              className="h-9 w-9 rounded-full bg-blue-600 text-white font-semibold flex items-center justify-center hover:bg-blue-700 transition cursor-pointer"
+              aria-label="Abrir menu do perfil"
+            >
+              {initials}
+            </button>
+
+            {open && (
+              <div className="absolute right-0 mt-2 w-72 bg-slate-950/90 backdrop-blur border border-white/10 rounded-xl shadow-xl overflow-hidden">
+                <div className="p-4 border-b border-white/10">
+                  <div className="text-white font-semibold">{user?.name}</div>
+                  <div className="text-sm text-blue-200/80 mt-1">
+                    {user?.email}
+                  </div>
+                  <div className="mt-2 inline-flex text-xs px-2 py-1 rounded-full bg-white/10 text-blue-100">
+                    {roleLabel(user?.role)}
+                  </div>
+                </div>
+
+                <div className="p-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/5 text-red-300 cursor-pointer"
+                  >
+                    Sair
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

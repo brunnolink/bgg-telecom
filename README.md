@@ -62,7 +62,7 @@ VITE_PORT=5173
 
 ### Backend (`apps/server/.env`)
 ```
-env:DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bggtelecom
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bggtelecom
 PORT=3000
 JWT_SECRET=bggtelecom15
 CORS_ORIGIN=http://localhost:5173

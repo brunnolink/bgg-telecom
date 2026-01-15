@@ -2,7 +2,8 @@
 
 Projeto fullstack para gerenciamento de chamados de suporte.
 
-## Estrutura para localizar onde criar os arquivos .env. Raiz do projeto (`bgg-telecom/`)
+## Estrutura para localizar onde criar os arquivos .env. 
+## Raiz do projeto (`bgg-telecom/`)
 ```text
 bgg-telecom/
 ├── apps/app

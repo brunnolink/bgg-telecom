@@ -26,3 +26,14 @@ export type UpdateTicketPayload = Partial<{
   status: TicketStatus;
   priority: TicketPriority;
 }>;
+
+export type TicketComment = {
+  id: string;
+  message: string;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    role: "CLIENT" | "TECH";
+  };
+};

@@ -1,11 +1,20 @@
+import { z } from "zod";
 import { Role } from "@prisma/client";
 
-export type CreateUserDTO = {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
-};
- 
+export const createUserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(150),
+  password: z.string().min(6).max(100),
+  role: z.nativeEnum(Role),
+});
 
-export type UpdateUserDTO = Partial<Pick<CreateUserDTO, "name" | "password" | "email">>;
+export const updateUserSchema = createUserSchema
+  .pick({
+    name: true,
+    email: true,
+    password: true,
+  })
+  .partial();
+
+export type CreateUserDTO = z.infer<typeof createUserSchema>;
+export type UpdateUserDTO = z.infer<typeof updateUserSchema>;

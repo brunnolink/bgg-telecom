@@ -6,10 +6,17 @@ import {
   updateTicket,
   deleteTicket,
   assignTicketToMe,
+  listComments,
+  createComment,
 } from "../../api/tickets";
 import { Topbar } from "../../components/Topbar";
 import { useAuth } from "../../contexts/AuthContext";
-import type { Ticket, TicketStatus, TicketPriority } from "../../types";
+import type {
+  Ticket,
+  TicketStatus,
+  TicketPriority,
+  TicketComment,
+} from "../../types";
 import { StatusBadge, PriorityBadge } from "./components/Badges";
 import { ModalShell } from "./components/ModalShell";
 import { TicketCard } from "./components/TicketCard";
@@ -59,6 +66,12 @@ export function Tickets() {
   const [ePriority, setEPriority] = useState<TicketPriority>("MEDIUM");
   const [editError, setEditError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const [comments, setComments] = useState<TicketComment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [isCommenting, setIsCommenting] = useState(false);
 
   async function loadTickets() {
     try {
@@ -143,9 +156,46 @@ export function Tickets() {
     }
   }
 
-  function openView(ticket: Ticket) {
+  async function openView(ticket: Ticket) {
     setSelected(ticket);
     setMode("view");
+
+    try {
+      setCommentsLoading(true);
+      setCommentError(null);
+      const data = await listComments(ticket.id);
+      setComments(data);
+    } catch (err: any) {
+      setCommentError(
+        err?.response?.data?.message ?? "Erro ao carregar comentários"
+      );
+    } finally {
+      setCommentsLoading(false);
+    }
+  }
+
+  async function handleSendComment() {
+    if (!selected) return;
+
+    if (!commentText.trim()) {
+      setCommentError("Digite um comentário.");
+      return;
+    }
+
+    try {
+      setIsCommenting(true);
+      setCommentError(null);
+
+      const newComment = await createComment(selected.id, commentText.trim());
+      setComments((prev) => [...prev, newComment]);
+      setCommentText("");
+    } catch (err: any) {
+      setCommentError(
+        err?.response?.data?.message ?? "Erro ao enviar comentário"
+      );
+    } finally {
+      setIsCommenting(false);
+    }
   }
 
   function openEdit(ticket: Ticket) {
@@ -461,6 +511,73 @@ export function Tickets() {
               {selected.technicianId
                 ? "Ticket atribuído a um técnico"
                 : "Ticket ainda não atribuído"}
+            </div>
+
+            <div className="mt-4 border-t border-white/10 pt-4 space-y-3">
+              <h3 className="text-sm font-semibold text-white">Comentários</h3>
+
+              {commentsLoading ? (
+                <div className="text-sm text-slate-300">
+                  Carregando comentários...
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="text-sm text-slate-300">
+                  Nenhum comentário ainda.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="bg-slate-900/60 border border-white/10 rounded-lg p-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm text-white font-medium">
+                          {c.author.name}{" "}
+                          <span className="text-xs text-slate-400">
+                            ({c.author.role})
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {formatDateBR(c.createdAt)}
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-slate-200 mt-2 whitespace-pre-wrap">
+                        {c.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Escreva um comentário..."
+                  className="w-full border border-white/10 bg-slate-950/60 text-white rounded-lg px-3 py-2 text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-blue-600/40"
+                />
+
+                {commentError && (
+                  <p className="text-sm text-red-300">{commentError}</p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSendComment}
+                    disabled={isCommenting}
+                    className={[
+                      "px-3 py-2 text-sm rounded-lg text-white cursor-pointer",
+                      isCommenting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700",
+                    ].join(" ")}
+                  >
+                    {isCommenting ? "Enviando..." : "Enviar comentário"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </ModalShell>
